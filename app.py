@@ -1,10 +1,13 @@
 from flask import Flask, request, redirect, session
 import psycopg2
 import requests
+from werkzeug.security import generate_password_hash, check_password_hash
 
 # ---------------- APP ----------------
 ShopBoss = Flask(__name__)
-ShopBoss.secret_key = "secret123"
+
+# SECURITY KEY
+ShopBoss.secret_key = "fayiz"
 
 # ---------------- DATABASE ----------------
 def db():
@@ -40,7 +43,6 @@ def init_db():
     )
     """)
 
-    # ADD CATEGORY COLUMN IF OLD TABLE EXISTS
     try:
         cur.execute("""
         ALTER TABLE products
@@ -51,11 +53,9 @@ def init_db():
     except:
         conn.rollback()
 
-    # amazon.com/images/I/61utX8kBDlL._UY695_.jpg',
-        
-
-    
+    cur.close()
     conn.close()
+
 # ---------------- HEADER ----------------
 def header():
 
@@ -66,17 +66,19 @@ def header():
     <div style="
         background:#131921;
         color:white;
-        padding:10px;
+        padding:10px 14px;
         display:flex;
         align-items:center;
+        gap:10px;
+        flex-wrap:wrap;
         font-family:Arial;
+        box-sizing:border-box;
     ">
 
         <div style="
             color:#ff9900;
             font-size:24px;
             font-weight:bold;
-            margin-right:20px;
         ">
             ShopBoss
         </div>
@@ -84,8 +86,8 @@ def header():
         <form action="/" method="get"
         style="
             flex:1;
+            min-width:220px;
             display:flex;
-            margin:0 20px;
         ">
 
             <input
@@ -96,13 +98,15 @@ def header():
                 padding:10px;
                 border:none;
                 outline:none;
+                border-radius:4px 0 0 4px;
             ">
 
             <button style="
                 background:#febd69;
                 border:none;
-                padding:10px 20px;
+                padding:10px 16px;
                 cursor:pointer;
+                border-radius:0 4px 4px 0;
             ">
                 Search
             </button>
@@ -111,7 +115,9 @@ def header():
 
         <div style="
             display:flex;
-            gap:20px;
+            gap:14px;
+            flex-wrap:wrap;
+            font-size:14px;
         ">
 
             <a href="/"
@@ -148,9 +154,12 @@ def splash():
 
     <head>
 
+        <meta name="viewport"
+        content="width=device-width, initial-scale=1.0">
+
         <meta http-equiv="refresh" content="3;url=/check">
 
-        <title>Welcome To Shopboss</title>
+        <title>Welcome To ShopBoss</title>
 
         <style>
 
@@ -163,25 +172,26 @@ def splash():
                 height:100vh;
                 font-family:Arial;
                 overflow:hidden;
+                padding:20px;
+                box-sizing:border-box;
+                text-align:center;
             }
 
             .box{
-                text-align:center;
                 animation:zoom 2s;
             }
 
             h1{
                 color:#ff9900;
-                font-size:70px;
+                font-size:clamp(36px,8vw,70px);
                 margin:0;
             }
 
             p{
                 color:white;
-                font-size:20px;
+                font-size:18px;
                 margin-top:10px;
             }
-            
 
             @keyframes zoom{
                 from{
@@ -203,11 +213,9 @@ def splash():
 
         <div class="box">
 
-            <h1>Welcome To Shopboss</h1>
+            <h1>Welcome To ShopBoss</h1>
 
             <p>Kashmir's First Shopping App</p>
-
-            <div class="loader"></div>
 
         </div>
 
@@ -215,24 +223,19 @@ def splash():
 
     </html>
     """
+
 # ---------------- CHECK ----------------
 @ShopBoss.route("/check")
 def check():
 
-    # USER ALREADY LOGGED IN
     if session.get("user"):
-
         return redirect("/")
 
-    # FIRST TIME USER
     if not session.get("signedup"):
-
         return redirect("/signup")
 
-    # USER SIGNED UP BUT NOT LOGGED IN
     return redirect("/login")
 
-# ---------------- HOME ----------------
 # ---------------- HOME ----------------
 @ShopBoss.route("/")
 def home():
@@ -245,7 +248,6 @@ def home():
     conn = db()
     cur = conn.cursor()
 
-    # SEARCH
     if query:
 
         cur.execute(
@@ -280,105 +282,56 @@ def home():
     html += """
     <div style="
         background:white;
-        padding:12px;
+        padding:12px 14px;
         display:flex;
         gap:10px;
         overflow-x:auto;
         font-family:Arial;
         border-bottom:1px solid #ddd;
         white-space:nowrap;
+        box-sizing:border-box;
     ">
-
-        <a href="/?q=Cricket"
-        style="
-            text-decoration:none;
-            background:#f3f3f3;
-            padding:8px 14px;
-            border-radius:30px;
-            color:black;
-            font-weight:bold;
-            font-size:14px;
-        ">
-            🏏 Cricket
-        </a>
-
-        <a href="/?q=Football"
-        style="
-            text-decoration:none;
-            background:#f3f3f3;
-            padding:8px 14px;
-            border-radius:30px;
-            color:black;
-            font-weight:bold;
-            font-size:14px;
-        ">
-            ⚽ Football
-        </a>
-
-        <a href="/?q=Fashion"
-        style="
-            text-decoration:none;
-            background:#f3f3f3;
-            padding:8px 14px;
-            border-radius:30px;
-            color:black;
-            font-weight:bold;
-            font-size:14px;
-        ">
-            👕 Fashion
-        </a>
-
-        <a href="/?q=Shoes"
-        style="
-            text-decoration:none;
-            background:#f3f3f3;
-            padding:8px 14px;
-            border-radius:30px;
-            color:black;
-            font-weight:bold;
-            font-size:14px;
-        ">
-            👟 Shoes
-        </a>
-
-        <a href="/?q=Electronics"
-        style="
-            text-decoration:none;
-            background:#f3f3f3;
-            padding:8px 14px;
-            border-radius:30px;
-            color:black;
-            font-weight:bold;
-            font-size:14px;
-        ">
-            📱 Electronics
-        </a>
-
-        <a href="/?q=Kitchen"
-        style="
-            text-decoration:none;
-            background:#f3f3f3;
-            padding:8px 14px;
-            border-radius:30px;
-            color:black;
-            font-weight:bold;
-            font-size:14px;
-        ">
-            🧑‍🍳 Kitchen
-        </a>
-
-    </div>
     """
+
+    categories = [
+        ("🏏 Cricket", "Cricket"),
+        ("⚽ Football", "Football"),
+        ("👕 Fashion", "Fashion"),
+        ("👟 Shoes", "Shoes"),
+        ("📱 Electronics", "Electronics"),
+        ("🧑‍🍳 Kitchen", "Kitchen")
+    ]
+
+    for text, value in categories:
+
+        html += f"""
+        <a href="/?q={value}"
+        style="
+            text-decoration:none;
+            background:#f3f3f3;
+            padding:8px 14px;
+            border-radius:30px;
+            color:black;
+            font-weight:bold;
+            font-size:14px;
+            flex-shrink:0;
+        ">
+            {text}
+        </a>
+        """
+
+    html += "</div>"
 
     # -------- PRODUCTS --------
     html += """
     <div style="
         background:#eaeded;
-        padding:12px;
+        padding:14px;
         display:grid;
-        grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
-        gap:12px;
+        grid-template-columns:repeat(auto-fit,minmax(180px,1fr));
+        gap:14px;
         font-family:Arial;
+        box-sizing:border-box;
     ">
     """
 
@@ -392,19 +345,24 @@ def home():
             padding:10px;
             border-radius:10px;
             box-shadow:0 2px 5px rgba(0,0,0,0.12);
+            width:100%;
+            box-sizing:border-box;
         ">
 
-            <img src="{p[3]}"
+            <img loading="lazy" src="{p[3]}"
             style="
                 width:100%;
-                height:150px;
+                height:145px;
                 object-fit:cover;
                 border-radius:8px;
+                display:block;
             ">
 
             <h3 style="
-                font-size:16px;
+                font-size:15px;
                 margin:10px 0 5px;
+                min-height:38px;
+                overflow:hidden;
             ">
                 {p[1]}
             </h3>
@@ -419,7 +377,7 @@ def home():
 
             <h2 style="
                 color:green;
-                font-size:20px;
+                font-size:19px;
                 margin:10px 0;
             ">
                 ₹{p[2]}
@@ -446,8 +404,7 @@ def home():
     html += "</div>"
 
     return html
-            
-        
+
 # ---------------- SIGNUP ----------------
 @ShopBoss.route("/signup", methods=["GET","POST"])
 def signup():
@@ -468,10 +425,29 @@ def signup():
             (username,)
         )
 
+        existing = cur.fetchone()
+
+        if existing:
+
+            cur.close()
+            conn.close()
+
+            return """
+            <h2 style='
+                font-family:Arial;
+                text-align:center;
+                margin-top:100px;
+                color:red;
+            '>
+                Username Already Exists
+            </h2>
+            """
+
+        hashed = generate_password_hash(password)
 
         cur.execute(
             "INSERT INTO users(username,password) VALUES(%s,%s)",
-            (username,password)
+            (username,hashed)
         )
 
         conn.commit()
@@ -492,14 +468,18 @@ def signup():
         height:100vh;
         background:#f2f2f2;
         font-family:Arial;
+        padding:15px;
+        box-sizing:border-box;
     ">
 
         <form method="post"
         style="
             background:white;
             padding:30px;
-            width:320px;
+            width:100%;
+            max-width:320px;
             border-radius:10px;
+            box-sizing:border-box;
         ">
 
             <h2 style="text-align:center;">
@@ -514,6 +494,7 @@ def signup():
                 width:100%;
                 padding:10px;
                 margin:10px 0;
+                box-sizing:border-box;
             ">
 
             <input
@@ -525,6 +506,7 @@ def signup():
                 width:100%;
                 padding:10px;
                 margin:10px 0;
+                box-sizing:border-box;
             ">
 
             <button
@@ -558,8 +540,8 @@ def login():
         cur = conn.cursor()
 
         cur.execute(
-            "SELECT * FROM users WHERE username=%s AND password=%s",
-            (username,password)
+            "SELECT * FROM users WHERE username=%s",
+            (username,)
         )
 
         user = cur.fetchone()
@@ -567,7 +549,7 @@ def login():
         cur.close()
         conn.close()
 
-        if user:
+        if user and check_password_hash(user[2], password):
 
             session["user"] = username
 
@@ -583,14 +565,18 @@ def login():
         height:100vh;
         background:#f2f2f2;
         font-family:Arial;
+        padding:15px;
+        box-sizing:border-box;
     ">
 
         <form method="post"
         style="
             background:white;
             padding:30px;
-            width:320px;
+            width:100%;
+            max-width:320px;
             border-radius:10px;
+            box-sizing:border-box;
         ">
 
             <h2 style="text-align:center;">
@@ -605,6 +591,7 @@ def login():
                 width:100%;
                 padding:10px;
                 margin:10px 0;
+                box-sizing:border-box;
             ">
 
             <input
@@ -616,6 +603,7 @@ def login():
                 width:100%;
                 padding:10px;
                 margin:10px 0;
+                box-sizing:border-box;
             ">
 
             <button
@@ -647,7 +635,6 @@ def add(id):
 
     return redirect("/cart")
 
-
 # ---------------- MINUS FROM CART ----------------
 @ShopBoss.route("/minus/<int:id>")
 def minus(id):
@@ -660,14 +647,12 @@ def minus(id):
 
         cart[pid] -= 1
 
-        # REMOVE ITEM IF 0
         if cart[pid] <= 0:
             del cart[pid]
 
     session["cart"] = cart
 
     return redirect("/cart")
-
 
 # ---------------- DELETE ITEM ----------------
 @ShopBoss.route("/delete/<int:id>")
@@ -684,7 +669,6 @@ def delete(id):
 
     return redirect("/cart")
 
-
 # ---------------- CART ----------------
 @ShopBoss.route("/cart")
 def cart():
@@ -696,26 +680,33 @@ def cart():
 
     total = 0
 
-    html = header()
+    html = """
+    <meta name="viewport"
+    content="width=device-width, initial-scale=1.0">
+    """
+
+    html += header()
 
     html += """
     <div style="
         display:flex;
-        padding:30px;
+        flex-wrap:wrap;
+        gap:20px;
+        padding:14px;
         background:#eaeded;
         font-family:Arial;
         min-height:100vh;
+        box-sizing:border-box;
     ">
     """
 
-    # LEFT SIDE
     html += """
     <div style="
-        width:70%;
+        flex:1;
+        min-width:300px;
     ">
     """
 
-    # EMPTY CART
     if not cart:
 
         html += """
@@ -745,7 +736,6 @@ def cart():
         </div>
         """
 
-    # PRODUCTS
     for pid, qty in cart.items():
 
         cur.execute(
@@ -758,37 +748,33 @@ def cart():
         if p:
 
             subtotal = p[2] * qty
-
             total += subtotal
 
             html += f"""
             <div style="
                 background:white;
-                padding:20px;
+                padding:14px;
                 margin-bottom:20px;
                 display:flex;
+                gap:15px;
+                flex-wrap:wrap;
                 border-radius:12px;
                 box-shadow:0 2px 6px rgba(0,0,0,0.1);
             ">
 
                 <img src="{p[3]}"
                 style="
-                    width:180px;
-                    height:200px;
+                    width:130px;
+                    height:140px;
                     object-fit:cover;
                     border-radius:10px;
-                    margin-right:20px;
                 ">
 
-                <div style="
-                    flex:1;
-                ">
+                <div style="flex:1;min-width:200px;">
 
                     <h2>{p[1]}</h2>
 
-                    <h3 style="
-                        color:green;
-                    ">
+                    <h3 style="color:green;">
                         ₹{p[2]}
                     </h3>
 
@@ -797,9 +783,9 @@ def cart():
                         align-items:center;
                         gap:10px;
                         margin-top:15px;
+                        flex-wrap:wrap;
                     ">
 
-                        <!-- MINUS -->
                         <a href="/minus/{p[0]}"
                         style="
                             width:40px;
@@ -817,7 +803,6 @@ def cart():
                             -
                         </a>
 
-                        <!-- QUANTITY -->
                         <div style="
                             width:50px;
                             text-align:center;
@@ -827,7 +812,6 @@ def cart():
                             {qty}
                         </div>
 
-                        <!-- PLUS -->
                         <a href="/add/{p[0]}"
                         style="
                             width:40px;
@@ -845,7 +829,6 @@ def cart():
                             +
                         </a>
 
-                        <!-- DELETE -->
                         <a href="/delete/{p[0]}"
                         style="
                             height:40px;
@@ -864,9 +847,7 @@ def cart():
 
                     </div>
 
-                    <h3 style="
-                        margin-top:20px;
-                    ">
+                    <h3 style="margin-top:20px;">
                         Subtotal ₹{subtotal}
                     </h3>
 
@@ -877,11 +858,10 @@ def cart():
 
     html += "</div>"
 
-    # RIGHT SIDE
     html += f"""
     <div style="
-        width:30%;
-        padding-left:20px;
+        width:100%;
+        max-width:320px;
     ">
 
         <div style="
@@ -897,9 +877,7 @@ def cart():
 
             <hr>
 
-            <h1 style="
-                color:green;
-            ">
+            <h1 style="color:green;">
                 ₹{total}
             </h1>
 
@@ -931,608 +909,23 @@ def cart():
 
     return html
 
-# ---------------- ADDRESS ----------------
-@ShopBoss.route("/address", methods=["GET","POST"])
-def address():
-
-    if request.method == "POST":
-
-        mobile = request.form["mobile"]
-        address = request.form["address"]
-        payment = request.form["payment"]
-
-        conn = db()
-        cur = conn.cursor()
-
-        total = 0
-
-        message = f"""
-NEW ORDER RECEIVED
-
-User: {session.get('user')}
-
-Mobile: {mobile}
-
-Address: {address}
-
-Payment: {payment}
-
-Items:
-"""
-
-        for pid, qty in session.get("cart", {}).items():
-
-            cur.execute(
-                "SELECT name,price FROM products WHERE id=%s",
-                (pid,)
-            )
-
-            p = cur.fetchone()
-
-            if p:
-
-                total += p[1] * qty
-
-                message += f"{p[0]} - Qty:{qty} - ₹{p[1]}\n"
-
-        message += f"\nTOTAL = ₹{total}"
-
-        requests.post(
-            "https://api.emailjs.com/api/v1.0/email/send",
-            headers={
-                "Content-Type":"application/json"
-            },
-            json={
-                "service_id":"service_shopboss",
-                "template_id":"template_shopboss",
-                "user_id":"9bTfVOFVe_u1Mt51L",
-                "template_params":{
-                    "name":session.get("user"),
-                    "email":"kfayizwani@gmail.com",
-                    "message":message
-                }
-            }
-        )
-
-        session["cart"] = {}
-
-        return f"""
-        <div style="
-            height:100vh;
-            display:flex;
-            justify-content:center;
-            align-items:center;
-            background:#eaeded;
-            font-family:Arial;
-        ">
-
-            <div style="
-                background:white;
-                padding:40px;
-                width:400px;
-                border-radius:10px;
-                text-align:center;
-            ">
-
-                <h1 style="color:green;">✔</h1>
-
-                <h2>Order Placed Successfully</h2>
-
-                <h3>Total Paid ₹{total}</h3>
-
-                <a href="/"
-                style="
-                    display:inline-block;
-                    background:#ffd814;
-                    padding:12px 20px;
-                    text-decoration:none;
-                    color:black;
-                ">
-                    Continue Shopping
-                </a>
-
-            </div>
-
-        </div>
-        """
-
-    return """
-    <div style="
-        display:flex;
-        justify-content:center;
-        align-items:center;
-        height:100vh;
-        background:#f2f2f2;
-        font-family:Arial;
-    ">
-
-        <form method="post"
-        style="
-            background:white;
-            padding:30px;
-            width:350px;
-            border-radius:10px;
-        ">
-
-            <h2 style="text-align:center;">
-                Checkout
-            </h2>
-
-            <input
-            name="mobile"
-            placeholder="Mobile Number"
-            required
-            style="
-                width:100%;
-                padding:10px;
-                margin:10px 0;
-            ">
-
-            <input
-            name="address"
-            placeholder="Address"
-            required
-            style="
-                width:100%;
-                padding:10px;
-                margin:10px 0;
-            ">
-
-            <h3>Payment Options</h3>
-
-            <input
-            type="radio"
-            name="payment"
-            value="Cash on Delivery"
-            required>
-            Cash on Delivery
-
-            <br><br>
-
-            <input
-            type="radio"
-            name="payment"
-            value="Online Payment"
-            onclick="showQR()">
-            Online Payment
-
-            <div id="qrBox"
-            style="
-                display:none;
-                text-align:center;
-            ">
-
-                <img src="/static/qr.png"
-                style="
-                    width:200px;
-                    margin-top:15px;
-                ">
-
-                <p>Scan & Pay</p>
-
-                <button
-                type="button"
-                onclick="confirmPayment()"
-                style="
-                    background:#ffd814;
-                    border:none;
-                    padding:10px;
-                ">
-                    Confirm Payment
-                </button>
-
-            </div>
-
-            <button
-            style="
-                width:100%;
-                padding:10px;
-                margin-top:20px;
-                background:#ffd814;
-                border:none;
-            ">
-                Place Order
-            </button>
-
-        </form>
-
-    </div>
-
-<script>
-
-let paid = false;
-
-function showQR(){
-
-    document.getElementById("qrBox").style.display = "block";
-}
-
-function confirmPayment(){
-
-    paid = true;
-
-    alert("Payment Confirmed");
-}
-
-document.querySelector("form").onsubmit = function(){
-
-    let p = document.querySelector('input[name="payment"]:checked');
-
-    if(p.value === "Online Payment" && !paid){
-
-        alert("Confirm QR Payment First");
-
-        return false;
-    }
-
-    return true;
-}
-
-</script>
-"""
-
-# ---------------- ADMIN ----------------
-@ShopBoss.route("/admin", methods=["GET","POST"])
-def admin():
-
-    if request.method == "POST":
-
-        if request.form["s"] == "fayiz123":
-
-            session["admin"] = True
-
-            return redirect("/panel")
-
-        # return "Wrong Password"
-
-    return """
-    <div style="
-        display:flex;
-        justify-content:center;
-        align-items:center;
-        height:100vh;
-        background:#f2f2f2;
-        font-family:Arial;
-    ">
-
-        <form method="post"
-        style="
-            background:white;
-            padding:30px;
-            width:320px;
-            border-radius:10px;
-        ">
-
-            <h2 style="text-align:center;">
-                Admin Login
-            </h2>
-
-            <input
-            type="password"
-            name="s"
-            placeholder="Secret Key"
-            required
-            style="
-                width:100%;
-                padding:10px;
-                margin:10px 0;
-            ">
-
-            <button
-            style="
-                width:100%;
-                padding:10px;
-                background:#ffd814;
-                border:none;
-            ">
-                Login
-            </button>
-
-        </form>
-
-    </div>
-    """
-
-# ---------------- PANEL ----------------
-@ShopBoss.route("/panel", methods=["GET","POST"])
-def panel():
-
-    if not session.get("admin"):
-        return redirect("/admin")
-
-    conn = db()
-    cur = conn.cursor()
-
-    # -------- ADD PRODUCT --------
-    if request.method == "POST":
-
-        # ADD
-        if "add" in request.form:
-
-            cur.execute(
-                """
-                INSERT INTO products(name,price,image,category)
-                VALUES(%s,%s,%s,%s)
-                """,
-                (
-                    request.form["name"],
-                    request.form["price"],
-                    request.form["image"],
-                    request.form["category"]
-                )
-            )
-
-        # UPDATE
-        elif "update" in request.form:
-
-            cur.execute(
-                """
-                UPDATE products
-                SET name=%s, price=%s, image=%s, category=%s
-                WHERE id=%s
-                """,
-                (
-                    request.form["name"],
-                    request.form["price"],
-                    request.form["image"],
-                    request.form["category"],
-                    request.form["id"]
-                )
-            )
-
-        # DELETE
-        elif "delete" in request.form:
-
-            cur.execute(
-                "DELETE FROM products WHERE id=%s",
-                (request.form["id"],)
-            )
-
-        conn.commit()
-
-    # GET PRODUCTS
-    cur.execute("SELECT * FROM products ORDER BY id DESC")
-
-    products = cur.fetchall()
-
-    html = header()
-
-    html += """
-    <div style="
-        background:#eaeded;
-        min-height:100vh;
-        padding:25px;
-        font-family:Arial;
-    ">
-
-        <!-- TOP BAR -->
-        <div style="
-            display:flex;
-            justify-content:space-between;
-            align-items:center;
-            margin-bottom:20px;
-        ">
-
-            <h1>Admin Panel</h1>
-
-        </div>
-
-        <!-- ADD PRODUCT BOX -->
-        <div style="
-            background:white;
-            padding:20px;
-            border-radius:10px;
-            margin-bottom:25px;
-            box-shadow:0 2px 8px rgba(0,0,0,0.1);
-        ">
-
-            <h2>Add Product</h2>
-
-            <form method="post"
-            style="
-                display:flex;
-                gap:10px;
-                flex-wrap:wrap;
-            ">
-
-                <input
-                name="name"
-                placeholder="Product Name"
-                required
-                style="
-                    flex:1;
-                    padding:10px;
-                ">
-
-                <input
-                name="price"
-                placeholder="Price"
-                required
-                style="
-                    width:120px;
-                    padding:10px;
-                ">
-
-                <input
-                name="image"
-                placeholder="Image URL"
-                required
-                style="
-                    flex:2;
-                    padding:10px;
-                ">
-
-                <select
-                name="category"
-                required
-                style="
-                    padding:10px;
-                ">
-
-                    <option value="">Category</option>
-
-                    <option>Cricket</option>
-
-                    <option>Football</option>
-
-                    <option>Fashion</option>
-
-                    <option>Electronics</option>
-
-                    <option>Kitchen</option>
-
-                    
-
-                </select>
-
-                <button
-                name="add"
-                style="
-                    background:#ffd814;
-                    border:none;
-                    padding:10px 20px;
-                    cursor:pointer;
-                    font-weight:bold;
-                ">
-                    Add
-                </button>
-
-            </form>
-
-        </div>
-
-        <!-- PRODUCTS GRID -->
-        <div style="
-            display:grid;
-            grid-template-columns:repeat(auto-fill,minmax(280px,1fr));
-            gap:20px;
-        ">
-    """
-
-    # -------- PRODUCTS --------
-    for p in products:
-
-        category = p[4] if len(p) > 4 else "General"
-
-        html += f"""
-        <div style="
-            background:white;
-            padding:15px;
-            border-radius:10px;
-            box-shadow:0 2px 8px rgba(0,0,0,0.1);
-        ">
-
-            <img src="{p[3]}"
-            style="
-                width:100%;
-                height:220px;
-                object-fit:cover;
-                border-radius:8px;
-            ">
-
-            <form method="post"
-            style="
-                margin-top:12px;
-                display:flex;
-                flex-direction:column;
-                gap:10px;
-            ">
-
-                <input type="hidden" name="id" value="{p[0]}">
-
-                <input
-                name="name"
-                value="{p[1]}"
-                style="padding:10px;">
-
-                <input
-                name="price"
-                value="{p[2]}"
-                style="padding:10px;">
-
-                <input
-                name="image"
-                value="{p[3]}"
-                style="padding:10px;">
-
-                <select
-                name="category"
-                style="padding:10px;">
-
-                    <option {"selected" if category=="Cricket" else ""}>
-                        Cricket
-                    </option>
-
-                    <option {"selected" if category=="Football" else ""}>
-                        Football
-                    </option>
-
-                    <option {"selected" if category=="Fashion" else ""}>
-                        Fashion
-                    </option>
-
-                    <option {"selected" if category=="Electronics" else ""}>
-                        Electronics
-                    </option>
-
-                    <option {"selected" if category=="Kitchen" else ""}>
-                        Kitchen
-                    </option>
- 
-                </select>
-
-                <div style="display:flex;gap:10px;">
-
-                    <button
-                    name="update"
-                    style="
-                        flex:1;
-                        background:green;
-                        color:white;
-                        border:none;
-                        padding:10px;
-                        cursor:pointer;
-                    ">
-                        Update
-                    </button>
-
-                    <button
-                    name="delete"
-                    style="
-                        flex:1;
-                        background:red;
-                        color:white;
-                        border:none;
-                        padding:10px;
-                        cursor:pointer;
-                    ">
-                        Delete
-                    </button>
-
-                </div>
-
-            </form>
-
-        </div>
-        """
-
-    html += """
-        </div>
-    </div>
-    """
-
-    cur.close()
-    conn.close()
-
-    return html
-
+# ---------------- LOGOUT 
 # ---------------- LOGOUT ----------------
 @ShopBoss.route("/logout")
 def logout():
 
+    # KEEP signup memory
+    signedup = session.get("signedup")
+
+    # CLEAR SESSION
     session.clear()
 
+    # RESTORE signup memory
+    if signedup:
+        session["signedup"] = True
+
     return redirect("/splash")
+
 
 # ---------------- RUN ----------------
 if __name__ == "__main__":
@@ -1542,5 +935,6 @@ if __name__ == "__main__":
     ShopBoss.run(
         host="0.0.0.0",
         port=5000,
-        debug=False
-    )
+        debug=False,
+        threaded=True
+                )
