@@ -51,39 +51,10 @@ def init_db():
     except:
         conn.rollback()
 
-    # DEMO PRODUCTS
-    cur.execute("SELECT * FROM products")
+    # amazon.com/images/I/61utX8kBDlL._UY695_.jpg',
+        
 
-    if not cur.fetchall():
-
-        cur.execute("""
-        INSERT INTO products(name,price,image,category)
-        VALUES
-        (
-            'iPhone 15',
-            120000,
-            'https://m.media-amazon.com/images/I/71d7rfSl0wL.jpg',
-            'Electronics'
-        ),
-
-        (
-            'Nike Shoes',
-            4500,
-            'https://m.media-amazon.com/images/I/61utX8kBDlL._UY695_.jpg',
-            'Fashion'
-        ),
-
-        (
-            'Headphones',
-            2500,
-            'https://m.media-amazon.com/images/I/61CGHv6kmWL.jpg',
-            'Electronics'
-        )
-        """)
-
-    conn.commit()
-
-    cur.close()
+    
     conn.close()
 # ---------------- HEADER ----------------
 def header():
@@ -262,6 +233,7 @@ def check():
     return redirect("/login")
 
 # ---------------- HOME ----------------
+# ---------------- HOME ----------------
 @ShopBoss.route("/")
 def home():
 
@@ -297,29 +269,35 @@ def home():
     cur.close()
     conn.close()
 
-    html = header()
+    html = """
+    <meta name="viewport"
+    content="width=device-width, initial-scale=1.0">
+    """
+
+    html += header()
 
     # -------- CATEGORY BAR --------
     html += """
     <div style="
         background:white;
-        padding:15px 20px;
+        padding:12px;
         display:flex;
-        gap:15px;
+        gap:10px;
         overflow-x:auto;
         font-family:Arial;
         border-bottom:1px solid #ddd;
+        white-space:nowrap;
     ">
 
         <a href="/?q=Cricket"
         style="
             text-decoration:none;
             background:#f3f3f3;
-            padding:10px 18px;
+            padding:8px 14px;
             border-radius:30px;
             color:black;
             font-weight:bold;
-            white-space:nowrap;
+            font-size:14px;
         ">
             🏏 Cricket
         </a>
@@ -328,11 +306,11 @@ def home():
         style="
             text-decoration:none;
             background:#f3f3f3;
-            padding:10px 18px;
+            padding:8px 14px;
             border-radius:30px;
             color:black;
             font-weight:bold;
-            white-space:nowrap;
+            font-size:14px;
         ">
             ⚽ Football
         </a>
@@ -341,11 +319,11 @@ def home():
         style="
             text-decoration:none;
             background:#f3f3f3;
-            padding:10px 18px;
+            padding:8px 14px;
             border-radius:30px;
             color:black;
             font-weight:bold;
-            white-space:nowrap;
+            font-size:14px;
         ">
             👕 Fashion
         </a>
@@ -354,11 +332,11 @@ def home():
         style="
             text-decoration:none;
             background:#f3f3f3;
-            padding:10px 18px;
+            padding:8px 14px;
             border-radius:30px;
             color:black;
             font-weight:bold;
-            white-space:nowrap;
+            font-size:14px;
         ">
             👟 Shoes
         </a>
@@ -367,11 +345,11 @@ def home():
         style="
             text-decoration:none;
             background:#f3f3f3;
-            padding:10px 18px;
+            padding:8px 14px;
             border-radius:30px;
             color:black;
             font-weight:bold;
-            white-space:nowrap;
+            font-size:14px;
         ">
             📱 Electronics
         </a>
@@ -380,11 +358,11 @@ def home():
         style="
             text-decoration:none;
             background:#f3f3f3;
-            padding:10px 18px;
+            padding:8px 14px;
             border-radius:30px;
             color:black;
             font-weight:bold;
-            white-space:nowrap;
+            font-size:14px;
         ">
             🧑‍🍳 Kitchen
         </a>
@@ -396,10 +374,10 @@ def home():
     html += """
     <div style="
         background:#eaeded;
-        padding:25px;
-        display:flex;
-        flex-wrap:wrap;
-        gap:20px;
+        padding:12px;
+        display:grid;
+        grid-template-columns:repeat(auto-fit,minmax(160px,1fr));
+        gap:12px;
         font-family:Arial;
     ">
     """
@@ -410,31 +388,40 @@ def home():
 
         html += f"""
         <div style="
-            width:220px;
             background:white;
-            padding:15px;
+            padding:10px;
             border-radius:10px;
-            box-shadow:0 2px 5px rgba(0,0,0,0.2);
+            box-shadow:0 2px 5px rgba(0,0,0,0.12);
         ">
 
             <img src="{p[3]}"
             style="
                 width:100%;
-                height:220px;
+                height:150px;
                 object-fit:cover;
                 border-radius:8px;
             ">
 
-            <h3>{p[1]}</h3>
+            <h3 style="
+                font-size:16px;
+                margin:10px 0 5px;
+            ">
+                {p[1]}
+            </h3>
 
             <p style="
-                color:#555;
-                font-size:14px;
+                color:#666;
+                font-size:13px;
+                margin:0;
             ">
                 {category}
             </p>
 
-            <h2 style="color:green;">
+            <h2 style="
+                color:green;
+                font-size:20px;
+                margin:10px 0;
+            ">
                 ₹{p[2]}
             </h2>
 
@@ -446,8 +433,9 @@ def home():
                 text-align:center;
                 text-decoration:none;
                 color:black;
-                border-radius:5px;
+                border-radius:6px;
                 font-weight:bold;
+                font-size:14px;
             ">
                 Add To Cart
             </a>
@@ -458,6 +446,8 @@ def home():
     html += "</div>"
 
     return html
+            
+        
 # ---------------- SIGNUP ----------------
 @ShopBoss.route("/signup", methods=["GET","POST"])
 def signup():
@@ -1391,6 +1381,8 @@ def panel():
 
                     <option>Kitchen</option>
 
+                    
+
                 </select>
 
                 <button
@@ -1483,6 +1475,10 @@ def panel():
                         Electronics
                     </option>
 
+                    <option {"selected" if category=="Kitchen" else ""}>
+                        Kitchen
+                    </option>
+ 
                 </select>
 
                 <div style="display:flex;gap:10px;">
